@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 10 (10.1 & 10.2) Interactive MCQ Web App</title>
+  <style>
+    :root {
+      --bg-color: #f4f7f6;
+      --card-bg: #ffffff;
+      --text-color: #2c3e50;
+      --primary-color: #2980b9;
+      --secondary-color: #8e44ad;
+      --border-color: #e0e0e0;
+      --correct-bg: #d4edda;
+      --correct-border: #28a745;
+      --correct-text: #155724;
+      --incorrect-bg: #f8d7da;
+      --incorrect-border: #dc3545;
+      --incorrect-text: #721c24;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+      text-align: center;
+      position: sticky;
+      top: 10px;
+      z-index: 100;
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      color: #1a252f;
+      font-size: 1.7em;
+    }
+
+    p.subtitle {
+      margin: 0 0 15px 0;
+      color: #7f8c8d;
+      font-size: 0.95em;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .score-board {
+      font-size: 1.1em;
+      font-weight: bold;
+      color: var(--primary-color);
+      background: #ebf5fb;
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid #aed6f1;
+    }
+
+    .btn-action {
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      font-size: 0.95em;
+      font-weight: 600;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+
+    .btn-action:hover {
+      background-color: #732d91;
+    }
+
+    .btn-action:active {
+      transform: scale(0.97);
+    }
+
+    .mcq-card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      border: 1px solid var(--border-color);
+    }
+
+    .question-title {
+      font-size: 1.05em;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option-btn {
+      width: 100%;
+      text-align: left;
+      background-color: #fff;
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px 15px;
+      cursor: pointer;
+      font-size: 0.98em;
+      transition: all 0.2s ease;
+      color: var(--text-color);
+    }
+
+    .option-btn:hover {
+      border-color: var(--primary-color);
+      background-color: #f8fafc;
+    }
+
+    .option-btn.selected-correct {
+      background-color: var(--correct-bg) !important;
+      border-color: var(--correct-border) !important;
+      color: var(--correct-text) !important;
+      font-weight: bold;
+    }
+
+    .option-btn.selected-incorrect {
+      background-color: var(--incorrect-bg) !important;
+      border-color: var(--incorrect-border) !important;
+      color: var(--incorrect-text) !important;
+    }
+
+    .explanation {
+      display: none;
+      margin-top: 15px;
+      padding: 12px 15px;
+      border-radius: 6px;
+      font-size: 0.9em;
+      background-color: #e9ecef;
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .explanation.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Chapter 10 Communication (10.1 & 10.2)</h1>
+      <p class="subtitle">Cambridge IGCSE ICT — 10.1 Communication with Audio & Video & 10.2 Effective Communication Techniques</p>
+      <div class="controls">
+        <div class="score-board">Score: <span id="score">0</span> / 50</div>
+        <button class="btn-action" onclick="shuffleAllAnswers()">🔀 Swap / Shuffle Answers</button>
+      </div>
+    </header>
+
+    <div id="quiz-container"></div>
+  </div>
+
+  <script>
+    const originalQuizData = [
+      // 10.1 Audio & Video Communication
+      {
+        q: "1. What is the primary function of a video conferencing system in ICT?",
+        options: [
+          "To send printed documents through network cables",
+          "To allow real-time visual and voice communication between participants in different locations",
+          "To record audio files for podcasts without visual output",
+          "To compress video files for email transmission"
+        ],
+        answerText: "To allow real-time visual and voice communication between participants in different locations",
+        exp: "Video conferencing enables face-to-face visual and audio interaction over networks regardless of physical distance."
+      },
+      {
+        q: "2. Which hardware item is mandatory for capturing live video during a video conference?",
+        options: [
+          "Microphone",
+          "Webcam",
+          "Barcode scanner",
+          "Laser printer"
+        ],
+        answerText: "Webcam",
+        exp: "A webcam captures live video feeds of meeting participants."
+      },
+      {
+        q: "3. What component processes and converts digital sound signals into audible sound waves for meeting participants?",
+        options: [
+          "Microphone",
+          "Speakers / Headphones",
+          "Network Interface Card",
+          "Graphics processing unit"
+        ],
+        answerText: "Speakers / Headphones",
+        exp: "Speakers or headsets convert incoming digital audio data into sound output."
+      },
+      {
+        q: "4. What software technology is used to handle voice traffic over IP-based networks?",
+        options: [
+          "VoIP (Voice over Internet Protocol)",
+          "FTP (File Transfer Protocol)",
+          "SMTP (Simple Mail Transfer Protocol)",
+          "HTML (HyperText Markup Language)"
+        ],
+        answerText: "VoIP (Voice over Internet Protocol)",
+        exp: "VoIP enables voice data transmission over internet protocol networks."
+      },
+      {
+        q: "5. What is the main advantage of video conferencing for international businesses?",
+        options: [
+          "It completely eliminates the need for computer hardware",
+          "It saves travel time, accommodation costs, and reduces carbon footprint",
+          "It guarantees zero latency during network congestion",
+          "It replaces the need for internet connectivity"
+        ],
+        answerText: "It saves travel time, accommodation costs, and reduces carbon footprint",
+        exp: "Virtual meetings reduce travel expenses, save staff travel hours, and reduce corporate emissions."
+      },
+      {
+        q: "6. Which factor causes video lagging or frame freezing during a video conference?",
+        options: [
+          "Low internet bandwidth or high latency",
+          "Using high-resolution monitor screens",
+          "Having an updated web browser",
+          "Connecting a USB microphone"
+        ],
+        answerText: "Low internet bandwidth or high latency",
+        exp: "Insufficient bandwidth or delayed packet delivery leads to video freezing and audio lag."
+      },
+      {
+        q: "7. What hardware device captures speech and voice input from participants during an audio conference?",
+        options: [
+          "Webcam",
+          "Microphone",
+          "Projector",
+          "Display monitor"
+        ],
+        answerText: "Microphone",
+        exp: "Microphones capture sound inputs and convert sound waves into digital signals."
+      },
+      {
+        q: "8. How does web conferencing differ from basic video conferencing?",
+        options: [
+          "Web conferencing includes interactive tools like screen sharing, chat, whiteboards, and file transfer",
+          "Web conferencing only supports one-way audio",
+          "Web conferencing does not require internet connection",
+          "Web conferencing can only be used on mobile phones"
+        ],
+        answerText: "Web conferencing includes interactive tools like screen sharing, chat, whiteboards, and file transfer",
+        exp: "Web conferencing adds collaboration features such as desktop sharing, whiteboards, and text chat."
+      },
+      {
+        q: "9. What technology reduces background echo during audio and video calls?",
+        options: [
+          "Acoustic Echo Cancellation (AEC)",
+          "Graphics accelerator driver",
+          "Bandwidth throttle",
+          "IP address masking"
+        ],
+        answerText: "Acoustic Echo Cancellation (AEC)",
+        exp: "AEC algorithms prevent feedback loops caused by microphones picking up speaker output."
+      },
+      {
+        q: "10. What is a key disadvantage of video conferencing compared to face-to-face meetings?",
+        options: [
+          "It is impossible to share digital documents",
+          "Technical glitches or connection drops can disrupt communication",
+          "It takes much longer to organize a virtual call",
+          "It requires physical presence in an office building"
+        ],
+        answerText: "Technical glitches or connection drops can disrupt communication",
+        exp: "Hardware failures or internet dropouts can halt virtual meetings."
+      },
+      {
+        q: "11. What screen feature in video conferencing allows a presenter to display a presentation or software application to remote attendees?",
+        options: [
+          "Screen sharing",
+          "Video encoding",
+          "IP routing",
+          "Data compression"
+        ],
+        answerText: "Screen sharing",
+        exp: "Screen sharing lets presenters display live desktop views to attendees."
+      },
+      {
+        q: "12. What role does a Codec play in video conferencing?",
+        options: [
+          "It encodes analog audio/video data into digital format for transmission and decodes received signals",
+          "It acts as a physical security lock on computer monitors",
+          "It controls electrical voltage to desktop speakers",
+          "It stores meeting transcripts on local hard disks"
+        ],
+        answerText: "It encodes analog audio/video data into digital format for transmission and decodes received signals",
+        exp: "Codecs compress and stream digital video/audio streams across network interfaces."
+      },
+      {
+        q: "13. What feature in web conferencing software permits attendees to write comments or ask questions without interrupting the speaker?",
+        options: [
+          "In-meeting text chat box",
+          "Video resolution switcher",
+          "Audio mute toggle",
+          "Screen brightness control"
+        ],
+        answerText: "In-meeting text chat box",
+        exp: "Integrated chat allows non-disruptive written interaction during presentations."
+      },
+      {
+        q: "14. Which metric measures the delay in time between sending audio/video data and its reception at the destination?",
+        options: [
+          "Bandwidth",
+          "Latency",
+          "Resolution",
+          "Frequency"
+        ],
+        answerText: "Latency",
+        exp: "Latency measures the delay in data packet transmission across networks."
+      },
+      {
+        q: "15. Why is an environment with excessive ambient noise problematic for video conferencing?",
+        options: [
+          "It corrupts data packets on the router",
+          "It interferes with audio clarity and makes it difficult for participants to hear speech clearly",
+          "It lowers camera frame rates automatically",
+          "It disconnects screen sharing connections"
+        ],
+        answerText: "It interferes with audio clarity and makes it difficult for participants to hear speech clearly",
+        exp: "Background noise overwhelms microphone pickup, causing voice distortion."
+      },
+
+      // 10.2 Effective Communication Techniques (Email, Web, & Written Communication)
+      {
+        q: "16. What is the primary objective of data protection laws regarding corporate email usage?",
+        options: [
+          "To enforce maximum internet connection speeds",
+          "To prevent unauthorized sharing and misuse of personal email data",
+          "To standardise display monitor dimensions",
+          "To restrict employee email server storage size"
+        ],
+        answerText: "To prevent unauthorized sharing and misuse of personal email data",
+        exp: "Data protection legislation regulates collection and sharing of personal electronic data."
+      },
+      {
+        q: "17. What field in an email header specifies additional recipients whose addresses remain hidden from other receivers?",
+        options: [
+          "To",
+          "Cc (Carbon Copy)",
+          "Bcc (Blind Carbon Copy)",
+          "Subject"
+        ],
+        answerText: "Bcc (Blind Carbon Copy)",
+        exp: "Bcc hides recipient email addresses from all other message recipients."
+      },
+      {
+        q: "18. What is the primary function of an email attachment?",
+        options: [
+          "To encrypt body text during network transmission",
+          "To send separate computer files (e.g., documents, images) along with the message text",
+          "To store contact addresses automatically",
+          "To prevent email spam detection"
+        ],
+        answerText: "To send separate computer files (e.g., documents, images) along with the message text",
+        exp: "Attachments permit users to transfer files alongside message text."
+      },
+      {
+        q: "19. Why do email services impose maximum file size limits on attachments?",
+        options: [
+          "To protect network bandwidth and prevent mail server congestion",
+          "To force users to write shorter subject lines",
+          "To comply with screen resolution standards",
+          "To automatically convert files into plaintext format"
+        ],
+        answerText: "To protect network bandwidth and prevent mail server congestion",
+        exp: "Size constraints prevent large attachments from overwhelming server bandwidth and storage."
+      },
+      {
+        q: "20. What is the main security risk associated with opening email attachments from unknown senders?",
+        options: [
+          "It lowers screen contrast settings",
+          "It may execute malicious software (malware or viruses) on the host computer",
+          "It deletes saved browser bookmarks",
+          "It changes the default system keyboard layout"
+        ],
+        answerText: "It may execute malicious software (malware or viruses) on the host computer",
+        exp: "Infected attachments are common vectors for malware execution."
+      },
+      {
+        q: "21. Which protocol is primarily responsible for retrieving emails from a mail server and downloading them to a local client device?",
+        options: [
+          "POP3 (Post Office Protocol 3)",
+          "SMTP (Simple Mail Transfer Protocol)",
+          "HTTP (Hypertext Transfer Protocol)",
+          "FTP (File Transfer Protocol)"
+        ],
+        answerText: "POP3 (Post Office Protocol 3)",
+        exp: "POP3 retrieves emails from a mail server and downloads them directly to local storage."
+      },
+      {
+        q: "22. Which email protocol is used to push/send emails from a client application to a mail server?",
+        options: [
+          "IMAP",
+          "SMTP (Simple Mail Transfer Protocol)",
+          "POP3",
+          "HTTPS"
+        ],
+        answerText: "SMTP (Simple Mail Transfer Protocol)",
+        exp: "SMTP handles sending and routing email messages across network servers."
+      },
+      {
+        q: "23. What is the key advantage of IMAP over POP3 for accessing emails?",
+        options: [
+          "IMAP synchronizes mailbox folders across multiple devices seamlessly",
+          "IMAP removes messages from the server immediately",
+          "IMAP does not require an internet connection",
+          "IMAP automatically compresses image attachments"
+        ],
+        answerText: "IMAP synchronizes mailbox folders across multiple devices seamlessly",
+        exp: "IMAP retains emails on the server, keeping mailboxes synced across devices."
+      },
+      {
+        q: "24. What is an acceptable use policy (AUP) in an organization regarding email communication?",
+        options: [
+          "A set of rules specifying permitted and prohibited uses of company email systems",
+          "A software tool that formats email text fonts",
+          "A law governing international bandwidth fees",
+          "A hardware specification for mail servers"
+        ],
+        answerText: "A set of rules specifying permitted and prohibited uses of company email systems",
+        exp: "An AUP defines rules and acceptable behavior for company systems."
+      },
+      {
+        q: "25. What is 'phishing' in the context of email communication?",
+        options: [
+          "Sending unsolicited bulk commercial advertising",
+          "Using deceptive emails to trick recipients into revealing sensitive personal or financial information",
+          "Compressing file attachments to save storage space",
+          "Bypassing spam filters using standard plain text"
+        ],
+        answerText: "Using deceptive emails to trick recipients into revealing sensitive personal or financial information",
+        exp: "Phishing uses fraudulent emails to steal credentials or personal data."
+      },
+      {
+        q: "26. What is 'spam' in email communication?",
+        options: [
+          "Unsolicited bulk electronic messages sent indiscriminately to large numbers of users",
+          "Encrypted messages sent between secure servers",
+          "Email messages containing corrupt file attachments",
+          "Automated calendar invitations"
+        ],
+        answerText: "Unsolicited bulk electronic messages sent indiscriminately to large numbers of users",
+        exp: "Spam refers to unwanted junk mail broadcast to mass recipient lists."
+      },
+      {
+        q: "27. How can users protect their email account credentials from unauthorized access?",
+        options: [
+          "Enabling two-factor authentication (2FA) and using strong, unique passwords",
+          "Saving passwords in plain text files on desktop screens",
+          "Using short dictionary words as passwords",
+          "Sharing login credentials with trusted colleagues"
+        ],
+        answerText: "Enabling two-factor authentication (2FA) and using strong, unique passwords",
+        exp: "2FA combined with strong passwords prevents unauthorized account access."
+      },
+      {
+        q: "28. What is the purpose of digital signatures in email communication?",
+        options: [
+          "To verify the authenticity of the sender and guarantee message integrity",
+          "To format signature image graphics automatically",
+          "To compress email attachment size",
+          "To automatically translate emails into different languages"
+        ],
+        answerText: "To verify the authenticity of the sender and guarantee message integrity",
+        exp: "Digital signatures verify sender identity and ensure content has not been altered."
+      },
+      {
+        q: "29. What does email encryption guarantee during transmission across the internet?",
+        options: [
+          "The email text is rendered unreadable to eavesdroppers intercepting data in transit",
+          "The email is delivered within 1 millisecond",
+          "The email bypasses recipient anti-virus scanners",
+          "The email is saved automatically to local hard drives"
+        ],
+        answerText: "The email text is rendered unreadable to eavesdroppers intercepting data in transit",
+        exp: "Encryption converts readable text into ciphertext to preserve data privacy."
+      },
+      {
+        q: "30. Why should professional business emails maintain a clear and relevant Subject line?",
+        options: [
+          "It helps recipients prioritize messages and allows efficient indexing and searching",
+          "It prevents the email server from deleting the message",
+          "It increases attachment download speeds",
+          "It overrides recipient email client filters"
+        ],
+        answerText: "It helps recipients prioritize messages and allows efficient indexing and searching",
+        exp: "Clear subject lines help recipients identify message context quickly."
+      },
+      {
+        q: "31. What is 'netiquette' when communicating via email?",
+        options: [
+          "The network layer protocol specification",
+          "The accepted code of polite and professional behavior for online electronic communication",
+          "A firewall configuration software",
+          "An automated email sorting system"
+        ],
+        answerText: "The accepted code of polite and professional behavior for online electronic communication",
+        exp: "Netiquette refers to social guidelines for respectful digital communication."
+      },
+      {
+        q: "32. Why is typing an entire email in ALL CAPITAL LETTERS considered bad netiquette?",
+        options: [
+          "It is interpreted as SHOUTING and appears aggressive or rude",
+          "It causes email servers to reject delivery",
+          "It doubles the binary file size of the message",
+          "It disables link clicking for recipients"
+        ],
+        answerText: "It is interpreted as SHOUTING and appears aggressive or rude",
+        exp: "All caps text is interpreted as shouting in online communication standards."
+      },
+      {
+        q: "33. What risk is associated with using the 'Reply All' button carelessly?",
+        options: [
+          "Accidentally broadcasting private or confidential replies to unintended recipients",
+          "Permanently corrupting the original email thread",
+          "Triggering automatic account suspension",
+          "Sending duplicate file attachments to the mail server"
+        ],
+        answerText: "Accidentally broadcasting private or confidential replies to unintended recipients",
+        exp: "Reply All sends your response to everyone copied on the original email."
+      },
+      {
+        q: "34. What feature allows users to organize received emails into logical subfolders automatically?",
+        options: [
+          "Email filters / inbox rules",
+          "Attachment compression utilities",
+          "Bcc header settings",
+          "SMTP delivery logs"
+        ],
+        answerText: "Email filters / inbox rules",
+        exp: "Inbox rules sort incoming mail automatically into target folders based on set criteria."
+      },
+      {
+        q: "35. What is an email group or distribution list used for?",
+        options: [
+          "Sending a single message to multiple pre-defined recipients simultaneously using one contact name",
+          "Converting text emails into audio voice notes",
+          "Testing server network transmission rates",
+          "Formatting graphic images within HTML emails"
+        ],
+        answerText: "Sending a single message to multiple pre-defined recipients simultaneously using one contact name",
+        exp: "Distribution lists group contacts into one list for broadcast messaging."
+      },
+      {
+        q: "36. What information is stored inside an email address book / contact list?",
+        options: [
+          "Names, email addresses, phone numbers, and contact details of frequent correspondents",
+          "Mail server IP addresses and routing tables",
+          "Archived file attachments",
+          "Password encryption keys"
+        ],
+        answerText: "Names, email addresses, phone numbers, and contact details of frequent correspondents",
+        exp: "Address books keep track of saved recipient contact information."
+      },
+      {
+        q: "37. What security risk does 'spear phishing' present compared to generic phishing?",
+        options: [
+          "It targets specific individuals using personalized info to appear highly convincing",
+          "It affects hardware components directly",
+          "It sends messages without using mail servers",
+          "It only impacts mobile devices"
+        ],
+        answerText: "It targets specific individuals using personalized info to appear highly convincing",
+        exp: "Spear phishing uses tailored personal details to trick specific targets."
+      },
+      {
+        q: "38. Why do companies implement email archiving policies?",
+        options: [
+          "To retain historical communication records for legal compliance and business continuity",
+          "To increase daily internet browsing speeds",
+          "To block external incoming email connections",
+          "To standardise employee email signatures"
+        ],
+        answerText: "To retain historical communication records for legal compliance and business continuity",
+        exp: "Archiving guarantees searchable long-term records for compliance and audits."
+      },
+      {
+        q: "39. What is the role of a spam filter in an email security architecture?",
+        options: [
+          "To inspect incoming messages and flag/isolate suspicious or junk mail automatically",
+          "To encrypt outgoing messages automatically",
+          "To shrink attachment sizes before sending",
+          "To automatically generate automated replies"
+        ],
+        answerText: "To inspect incoming messages and flag/isolate suspicious or junk mail automatically",
+        exp: "Spam filters screen messages and isolate suspicious or unwanted emails."
+      },
+      {
+        q: "40. What is an 'Out of Office' (auto-responder) email function?",
+        options: [
+          "An automated reply sent to inform senders that a recipient is currently unavailable",
+          "A filter that deletes incoming emails automatically",
+          "A security lock that disables email access",
+          "A server backup process"
+        ],
+        answerText: "An automated reply sent to inform senders that a recipient is currently unavailable",
+        exp: "Auto-responders notify senders automatically when users are unavailable."
+      },
+      {
+        q: "41. What constraint should be considered when embedding images directly inside an HTML email body?",
+        options: [
+          "Some email clients block remote images by default to protect privacy",
+          "HTML emails cannot display text formatting",
+          "Embedded images delete the recipient's inbox history",
+          "Images alter the sender's email address"
+        ],
+        answerText: "Some email clients block remote images by default to protect privacy",
+        exp: "Many email clients block remote images to prevent web tracking beacons."
+      },
+      {
+        q: "42. What is the main danger of clickbait links contained within unsolicited emails?",
+        options: [
+          "Redirecting users to compromised websites designed to install drive-by malware or harvest credentials",
+          "Permanently lowering monitor display resolution",
+          "Deleting installed system drivers",
+          "Increasing local printer paper usage"
+        ],
+        answerText: "Redirecting users to compromised websites designed to install drive-by malware or harvest credentials",
+        exp: "Clickbait links lead users to compromised sites designed to compromise security."
+      },
+      {
+        q: "43. Why should sensitive Personal Identifiable Information (PII) not be sent via unencrypted email?",
+        options: [
+          "Unencrypted email plain text can be intercepted and read during network transmission",
+          "Unencrypted emails are rejected by web browsers",
+          "It automatically corrupts document formatting",
+          "It causes email addresses to expire"
+        ],
+        answerText: "Unencrypted email plain text can be intercepted and read during network transmission",
+        exp: "Unencrypted email text travels across public networks in clear text."
+      },
+      {
+        q: "44. What is an email footprint or signature block?",
+        options: [
+          "A standardized text block added to the end of outgoing emails containing contact and legal details",
+          "The digital size of an email header file",
+          "The trace left by server IP routing logs",
+          "An anti-virus scanning stamp"
+        ],
+        answerText: "A standardized text block added to the end of outgoing emails containing contact and legal details",
+        exp: "Signature blocks contain sender contact info and organizational disclaimers."
+      },
+      {
+        q: "45. How does a webmail service differ from a dedicated desktop email client?",
+        options: [
+          "Webmail accesses emails via a web browser without needing specific client software installation",
+          "Webmail does not allow sending file attachments",
+          "Desktop email clients require no internet connection to receive new emails",
+          "Webmail does not support password protection"
+        ],
+        answerText: "Webmail accesses emails via a web browser without needing specific client software installation",
+        exp: "Webmail runs inside web browsers, requiring no local software installation."
+      },
+      {
+        q: "46. What is the purpose of an email disclaimer at the bottom of corporate messages?",
+        options: [
+          "To provide legal protection regarding confidentiality and unintended delivery",
+          "To compress body text for fast transmission",
+          "To verify recipient identity",
+          "To prevent email attachments from containing viruses"
+        ],
+        answerText: "To provide legal protection regarding confidentiality and unintended delivery",
+        exp: "Disclaimers state corporate legal terms regarding misdirected messages."
+      },
+      {
+        q: "47. What constitutes email spoofing?",
+        options: [
+          "Forging the sender header address so the email appears to originate from a trusted source",
+          "Sending emails with multiple PDF attachments",
+          "Saving draft emails to local folders",
+          "Filtering unwanted promotional emails"
+        ],
+        answerText: "Forging the sender header address so the email appears to originate from a trusted source",
+        exp: "Spoofing falsifies email headers to disguise sender identities."
+      },
+      {
+        q: "48. What feature allows users to forward a received email to a new contact?",
+        options: [
+          "Forward (Fwd)",
+          "Reply",
+          "Bcc",
+          "Archive"
+        ],
+        answerText: "Forward (Fwd)",
+        exp: "Forwarding passes a copy of a received message to a new recipient."
+      },
+      {
+        q: "49. Why should hyperlinked URL text in suspicious emails be hovered over before clicking?",
+        options: [
+          "To verify if the actual destination URL matches the displayed text link",
+          "To clear the web browser cache",
+          "To automatically download site assets",
+          "To test keyboard interface speeds"
+        ],
+        answerText: "To verify if the actual destination URL matches the displayed text link",
+        exp: "Hovering over links reveals the true target URL address."
+      },
+      {
+        q: "50. What guideline ensures email communications stay clear, concise, and professional?",
+        options: [
+          "Proofreading content, using concise structure, and avoiding offensive language or jargon",
+          "Using bright background colors and colorful fonts",
+          "Attaching large video files to every message",
+          "Omitting subject lines completely"
+        ],
+        answerText: "Proofreading content, using concise structure, and avoiding offensive language or jargon",
+        exp: "Proofreading and concise formatting ensure clear professional communication."
+      }
+    ];
+
+    let currentQuizState = [];
+    let userAnswers = new Array(originalQuizData.length).fill(null);
+
+    function initQuiz() {
+      currentQuizState = originalQuizData.map((item) => {
+        const shuffledOptions = [...item.options];
+        shuffleArray(shuffledOptions);
+        return {
+          ...item,
+          shuffledOptions: shuffledOptions
+        };
+      });
+      userAnswers = new Array(originalQuizData.length).fill(null);
+      renderQuiz();
+      calculateScore();
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function renderQuiz() {
+      const container = document.getElementById('quiz-container');
+      container.innerHTML = '';
+
+      currentQuizState.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'mcq-card';
+        card.id = `card-${index}`;
+
+        const title = document.createElement('div');
+        title.className = 'question-title';
+        title.innerText = item.q;
+        card.appendChild(title);
+
+        const optionsList = document.createElement('div');
+        optionsList.className = 'options';
+
+        item.shuffledOptions.forEach((optText, optIdx) => {
+          const btn = document.createElement('button');
+          btn.className = 'option-btn';
+          btn.innerText = `${String.fromCharCode(65 + optIdx)}. ${optText}`;
+          
+          if (userAnswers[index] === optText) {
+            if (optText === item.answerText) {
+              btn.classList.add('selected-correct');
+            } else {
+              btn.classList.add('selected-incorrect');
+            }
+          }
+
+          btn.onclick = () => handleAnswerSelect(index, optText);
+          optionsList.appendChild(btn);
+        });
+
+        card.appendChild(optionsList);
+
+        const exp = document.createElement('div');
+        exp.className = `explanation ${userAnswers[index] !== null ? 'show' : ''}`;
+        exp.id = `exp-${index}`;
+        exp.innerText = `Explanation: ${item.exp}`;
+        card.appendChild(exp);
+
+        container.appendChild(card);
+      });
+    }
+
+    function handleAnswerSelect(questionIdx, selectedOptText) {
+      userAnswers[questionIdx] = selectedOptText;
+      const card = document.getElementById(`card-${questionIdx}`);
+      const buttons = card.querySelectorAll('.option-btn');
+      const item = currentQuizState[questionIdx];
+
+      buttons.forEach(btn => {
+        btn.classList.remove('selected-correct', 'selected-incorrect');
+        const optionContent = btn.innerText.substring(3);
+        if (optionContent === selectedOptText) {
+          if (selectedOptText === item.answerText) {
+            btn.classList.add('selected-correct');
+          } else {
+            btn.classList.add('selected-incorrect');
+          }
+        }
+      });
+
+      const expBox = document.getElementById(`exp-${questionIdx}`);
+      expBox.classList.add('show');
+
+      calculateScore();
+    }
+
+    function calculateScore() {
+      let score = 0;
+      userAnswers.forEach((ansText, idx) => {
+        if (ansText === originalQuizData[idx].answerText) {
+          score++;
+        }
+      });
+      document.getElementById('score').innerText = score;
+    }
+
+    function shuffleAllAnswers() {
+      currentQuizState.forEach((item) => {
+        shuffleArray(item.shuffledOptions);
+      });
+      renderQuiz();
+    }
+
+    window.onload = initQuiz;
+  </script>
+</body>
+</html>
